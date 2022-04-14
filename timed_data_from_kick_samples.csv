@@ -1,0 +1,43 @@
+"","date","stream","site","timed_sample","species","total_specimens","area_sampled_m_2","specimens_m_2","altitude"
+"1",2013,"Cave Creek","Research Station","1","hellgrammite",12,28,0.429,"1615"
+"2",2013,"Cave Creek","John Hands","1","hellgrammite",3,40,0.075,"1715"
+"3",2013,"Cave Creek","Herb Martyr","1","hellgrammite",10,20,0.5,"1760"
+"4",2013,"Cave Creek","Site 9","1","hellgrammite",14,27,0.519,"1825"
+"5",2013,"Cave Creek","Site 10","1","hellgrammite",2,24,0.083,"1900"
+"6",2013,"Cave Creek","Site 10","1","oplonaeschna",1,24,0.042,"1900"
+"7",2015,"Cave Creek","Research Station","1","hellgrammite",3,35,0.086,"1615"
+"8",2015,"Cave Creek","Research Station","1","oplonaeschna",1,35,0.029,"1615"
+"9",2015,"Cave Creek","John Hands","1","hellgrammite",3,38.5,0.078,"1715"
+"10",2015,"Cave Creek","Herb Martyr","1","hellgrammite",2,26.5,0.075,"1760"
+"11",2015,"Cave Creek","Site 10","1","hellgrammite",2,19,0.105,"1900"
+"12",2015,"East Turkey","Chellshack","1","hellgrammite",1,30,0.033,NA
+"13",2015,"East Turkey","Flintstone","1","hellgrammite",1,26,0.038,NA
+"14",2015,"West Turkey","Low Bridge","1","oplonaeschna",1,22.5,0.044,NA
+"15",2015,"West Turkey","White House","1","oplonaeschna",4,21,0.19,NA
+"16",2015,"West Turkey","Sycamore","1","hellgrammite",2,19,0.105,NA
+"17",2015,"West Turkey","End of Road","1","hellgrammite",7,19.5,0.359,NA
+"18",2016,"Cave Creek","Research Station","1","hellgrammite",15,36,0.417,"1615"
+"19",2016,"Cave Creek","John Hands","1","hellgrammite",5,33,0.152,"1715"
+"20",2016,"Cave Creek","Herb Martyr","1","hellgrammite",3,29.25,0.103,"1760"
+"21",2016,"Cave Creek","Herb Martyr","1","oplonaeschna",1,29.25,0.034,"1760"
+"22",2016,"Cave Creek","Site 10","1","hellgrammite",1,39,0.026,"1900"
+"23",2016,"Cave Creek","Site 10","1","oplonaeschna",4,39,0.103,"1900"
+"24",2016,"East Turkey","The Grade","1","oplonaeschna",2,25.5,0.078,NA
+"25",2016,"East Turkey","Flintstone","1","hellgrammite",1,22.25,0.045,NA
+"26",2016,"East Turkey","Flintstone","1","oplonaeschna",4,22.25,0.18,NA
+"27",2016,"West Turkey","Low Bridge","1","hellgrammite",2,36,0.056,NA
+"28",2016,"West Turkey","White House","1","oplonaeschna",1,33.9,0.029,NA
+"29",2016,"West Turkey","Sycamore","1","oplonaeschna",3,24,0.125,NA
+"30",2016,"West Turkey","Bear Sign","1","hellgrammite",5,21.75,0.23,NA
+"31",2022,"Cave Creek","Site 9","3 - Average","hellgrammite",39,33.8,1.154,"1825"
+"32",2022,"Cave Creek","Site 9","3 - Average","oplonaeschna",3,33.8,0.089,"1825"
+"33",2022,"Cave Creek","Site 9","3 - Average","RRS",3,33.8,0.089,"1825"
+"34",2022,"Cave Creek","Herb Martyr","3 - Average","hellgrammite",20,52.8,0.379,"1760"
+"35",2022,"Cave Creek","Herb Martyr","3 - Average","oplonaeschna",4,52.8,0.076,"1760"
+"36",2022,"Cave Creek","Herb Martyr","3 - Average","RRS",4,52.8,0.076,"1760"
+"37",2022,"Cave Creek","John Hands","3 - Average","hellgrammite",16,44.05,0.363,"1715"
+"38",2022,"Cave Creek","John Hands","3 - Average","oplonaeschna",2,44.05,0.045,"1715"
+"39",2022,"Cave Creek","John Hands","3 - Average","RRS",0,44.05,0,"1715"
+"40",2022,"Cave Creek","Research Station","3 - Average","hellgrammite",14,69.95,0.2,"1615"
+"41",2022,"Cave Creek","Research Station","3 - Average","oplonaeschna",0,69.95,0,"1615"
+"42",2022,"Cave Creek","Research Station","3 - Average","RRS",16,69.95,0.229,"1615"

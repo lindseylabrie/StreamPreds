@@ -10,11 +10,15 @@ library(janitor)
 
 # getting the data for the years that are not 2022
 data <- read_csv("past_time_sample_data.csv") %>% 
-  # select(-X9,-X10) %>% 
+  # select(-x9,-x10) %>% 
   clean_names() %>% 
   mutate(timed_sample = case_when(timed_sample=="Timed 1"~"1",
                    timed_sample=="Timed 2"~"2",
-                   timed_sample=="1"~"1")) %>% 
+                   timed_sample=="1"~"1"),
+         altitude = case_when(site=="John Hands"~"1715",
+                              site=="Herb Martyr"~"1760",
+                              site=="Research Station"~"1615",
+                              site=="Site 9"~"1825")) %>% 
   filter(species %in% c("hellgrammite", "oplonaeschna", "RRS"),
          date %in% c("2013","2015","2016"))
 
@@ -22,9 +26,14 @@ data <- read_csv("past_time_sample_data.csv") %>%
 combined_timed <- read_csv("combined_time_sample_data.csv") %>% 
   clean_names() %>% 
   filter(species %in% c("hellgrammite", "oplonaeschna", "RRS")) %>% 
-  mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"))
+  mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"),
+         altitude = case_when(site=="John Hands"~"1715",
+                              site=="Herb Martyr"~"1760",
+                              site=="Research Station"~"1615",
+                              site=="Site 9"~"1825"))
 
 all_timed <- bind_rows(data, combined_timed)
+write.csv(all_timed, "timed_data_from_kick_samples.csv")
 
 # the other bugs
 other_timed <- read_csv("combined_time_sample_data.csv") %>% 
