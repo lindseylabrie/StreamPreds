@@ -10,7 +10,7 @@ library(janitor)
 
 # getting the data for the years that are not 2022
 data <- read_csv("past_time_sample_data.csv") %>% 
-  select(-X9,-X10) %>% 
+  # select(-X9,-X10) %>% 
   clean_names() %>% 
   mutate(timed_sample = case_when(timed_sample=="Timed 1"~"1",
                    timed_sample=="Timed 2"~"2",
@@ -25,6 +25,17 @@ combined_timed <- read_csv("combined_time_sample_data.csv") %>%
   mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"))
 
 all_timed <- bind_rows(data, combined_timed)
+
+# the other bugs
+other_timed <- read_csv("combined_time_sample_data.csv") %>% 
+  clean_names() %>% 
+  filter(species %in% c("caddisflies", "bellastomata", "water fleas", "damselfly","predatory beetles")) %>% 
+  mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"),
+         species = case_when(species=="bellastomata"~"belostomatid",
+                             species=="caddisflies"~"caddisflies",
+                             species=="water fleas"~"water fleas",
+                             species=="damselfly"~"damselfly",
+                             species=="predatory beetles"~"predatory beetles"))
 
 
 CaveCreek <- all_timed %>% 
@@ -61,15 +72,21 @@ CC2022 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
 
 CC2013 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
   geom_col(aes(fill=species), position = position_dodge(width=1))+
-  facet_grid(rows=vars(species))
+  facet_grid(rows=vars(species))+
+  labs(title = "Cave Creek Sites, 2013",
+       y="Specimens per Square Meter")
 
 CC2015 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
   geom_col(aes(fill=species), position = position_dodge(width=1))+
-  facet_grid(rows=vars(species))
+  facet_grid(rows=vars(species))+
+  labs(title = "Cave Creek Sites, 2015",
+       y="Specimens per Square Meter")
 
 CC2016 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
   geom_col(aes(fill=species), position = position_dodge(width=1))+
-  facet_grid(rows=vars(species))
+  facet_grid(rows=vars(species))+
+  labs(title = "Cave Creek Sites, 2016",
+       y="Specimens per Square Meter")
 
 
 # This shows the 3 biggest species compared over the years 2013, 2015, 2016, and 2022 for ONLY the timed samples.
@@ -91,3 +108,33 @@ density_compared_by_year <- CaveCreek %>% ggplot(aes(x=site,y=specimens_m_2))+
         axis.text.y = element_text(size=14))
 
 ggsave(density_compared_by_year, file= "plots/density_compared_by_year2.png", dpi = 350, width = 13.75, height = 11, units = "in")
+
+other_preds_compared <- other_timed %>% ggplot(aes(x=site,y=specimens_m_2))+ 
+  facet_grid(rows = vars(species))+
+  geom_col(aes(fill=species))+
+  geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=4)+
+  # theme_linedraw()+
+  labs(title = "Raw data comparison of density across sites in Cave Creek",
+       subtitle = "Other stream predators",
+       x="",
+       y="Density of Specimens per Square Meter")+
+  theme(axis.text.x = element_text(size=12, angle=45, vjust= 1, hjust = 1),
+        axis.text.y = element_text(size=12),
+        legend.position = "none")
+
+ggsave(other_preds_compared, file= "plots/other_preds_compared.png", dpi = 350, width = 6, height = 8, units = "in")
+
+main_preds <- CC2022 %>% ggplot(aes(x=site,y=specimens_m_2))+ 
+  facet_grid(rows = vars(species))+
+  geom_col(aes(fill=species))+
+  geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=4)+
+  # theme_linedraw()+
+  labs(title = "2022, Raw data comparison of density across sites in Cave Creek",
+       subtitle = "Main Stream Predators",
+       x="",
+       y="Density of Specimens per Square Meter")+
+  theme(axis.text.x = element_text(size=12, angle=45, vjust= 1, hjust = 1),
+        axis.text.y = element_text(size=12),
+        legend.position = "none")
+
+ggsave(main_preds, file= "plots/main_preds.png", dpi = 350, width = 6.25, height = 8, units = "in")
