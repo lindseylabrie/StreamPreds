@@ -15,38 +15,44 @@ library(ggplot2)
 # getting the data for the years that are not 2022
 data <- read_csv("past_time_sample_data.csv") %>% 
   clean_names() %>% 
-  mutate(timed_sample = case_when(timed_sample=="Timed 1"~"1",
-                   timed_sample=="Timed 2"~"2",
-                   timed_sample=="1"~"1"),
-         altitude = case_when(site=="John Hands"~"1715",
-                              site=="Herb Martyr"~"1760",
-                              site=="Research Station"~"1615",
-                              site=="Site 9"~"1825",
-                              site=="Site 10"~"1900")) %>% 
+  mutate(timed_sample = case_when(timed_sample=="Timed 1"~1,
+                   timed_sample=="Timed 2"~2,
+                   timed_sample=="1"~1),
+         altitude = case_when(site=="John Hands"~1715,
+                              site=="Herb Martyr"~1760,
+                              site=="Research Station"~1615,
+                              site=="Site 9"~1825,
+                              site=="Site 10"~1900)) %>% 
   filter(species %in% c("hellgrammite", "oplonaeschna", "RRS"),
          date %in% c("2013","2015","2016")) %>% 
   select(-x9, -x10)
            
            
 # 2022 combined timed sample data
-combined_timed <- read_csv("combined_time_sample_data.csv") %>% 
-  clean_names() %>% 
-  filter(species %in% c("hellgrammite", "oplonaeschna", "RRS")) %>% 
-  mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"),
-         altitude = case_when(site=="John Hands"~"1715",
-                              site=="Herb Martyr"~"1760",
-                              site=="Research Station"~"1615",
-                              site=="Site 9"~"1825"))
+full_2022_kicks <- read_csv("full_2022_kicks.csv") %>% 
+  clean_names()  %>% 
+  filter(!is.na(date)) %>% 
+  rename(species=species_5,
+         site=site_3) %>% 
+  mutate(altitude = case_when(site=="John Hands"~1715,
+                              site=="Herb Martyr"~1760,
+                              site=="Research Station"~1615,
+                              site=="Site 9"~1825)) %>% 
+  filter(species %in% c("hellgrammite", "oplonaeschna", "RRS"))
 
-all_timed <- bind_rows(data, combined_timed)
+all_timed <- bind_rows(data, full_2022_kicks) %>% 
+  mutate(specimens_m_2_01 = specimens_m_2 + 0.001,
+         altitude_km = altitude/1000)
+
 write.csv(all_timed, "timed_data_from_kick_samples.csv")
 
 # the other bugs
-other_timed <- read_csv("combined_time_sample_data.csv") %>% 
+other_timed <- read_csv("full_2022_kicks.csv") %>% 
   clean_names() %>% 
+  rename(species=species_5,
+         site=site_3) %>% 
   filter(species %in% c("caddisflies", "bellastomata", "water fleas", "damselfly","predatory beetles")) %>% 
-  mutate(timed_sample = case_when(timed_sample=="1 and 2 combined"~"3 - Average"),
-         species = case_when(species=="bellastomata"~"belostomatid",
+  mutate(species = case_when(species=="bellastomata"~"belostomatid",
                              species=="caddisflies"~"caddisflies",
                              species=="water fleas"~"water fleas",
                              species=="damselfly"~"damselfly",
@@ -112,7 +118,7 @@ CC2016 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
 
 density_compared_by_year <- CaveCreek %>% ggplot(aes(x=site,y=specimens_m_2))+ 
   facet_grid(rows = vars(species), cols=vars(date))+
-  geom_col(aes(fill=species))+
+  geom_point(aes(fill=species))+
   geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=5)+
   # theme_linedraw()+
   labs(title = "Raw data comparison of density across sites in Cave Creek over 9 years",
@@ -125,7 +131,7 @@ density_compared_by_year <- CaveCreek %>% ggplot(aes(x=site,y=specimens_m_2))+
 ggsave(density_compared_by_year, file= "plots/density_compared_by_year2.png", dpi = 350, width = 13.75, height = 11, units = "in")
 
 other_preds_compared <- other_timed %>% ggplot(aes(x=site,y=specimens_m_2))+ 
-  facet_grid(rows = vars(species))+
+  facet_grid(rows = vars(species), cols = vars(timed_sample))+
   geom_col(aes(fill=species))+
   geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=4)+
   # theme_linedraw()+
@@ -140,7 +146,7 @@ other_preds_compared <- other_timed %>% ggplot(aes(x=site,y=specimens_m_2))+
 ggsave(other_preds_compared, file= "plots/other_preds_compared.png", dpi = 350, width = 6, height = 8, units = "in")
 
 main_preds <- CC2022 %>% ggplot(aes(x=site,y=specimens_m_2))+ 
-  facet_grid(rows = vars(species))+
+  facet_grid(rows = vars(species), cols=vars(timed_sample))+
   geom_col(aes(fill=species))+
   geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=4)+
   # theme_linedraw()+
@@ -156,44 +162,58 @@ ggsave(main_preds, file= "plots/main_preds.png", dpi = 350, width = 6.25, height
 
 
 
-#### some sort of analysis , start from "getting priors" section####
+#### some sort of analysis , start from "getting priors" section ####
 
 # getting priors
-get_prior(specimens_m_2 ~ species + altitude + date + species*altitude + species*date, 
+get_prior(specimens_m_2 ~ 1 + altitude*date + (1|species), 
           data = all_timed,
-          family = gaussian())
+          family = Gamma(link="log"))
 
 # simulating priors
-priors = tibble(density_beta = rnorm(100, 0.25, 0.5),
-                altitude_beta = rnorm(),
-                # Iweight_beta2 = rnorm(100,-0.15 ,0.05),
-                Intercept = rnorm(100, 1, 1),
+priors = tibble(altitude_beta = rnorm(100, 0, 1),
+                Intercept = rnorm(100, -7, 3),
                 iter = 1:100)
 
 prior_sims = priors %>%
-  expand_grid(d %>% distinct(species)) %>%
-  mutate(count_sims = Intercept + weight_beta*weight_s)
+  expand_grid(all_timed %>% distinct(altitude, date)) %>%
+  mutate(date_alt = paste0(date, "_", altitude),
+         date_no = date - 2013,
+         date_factor = case_when(date_no == 0 ~ 0, TRUE ~ 1),
+         date_alt_factor = case_when(date_alt == "2013_1615" ~ 0,
+                                    TRUE ~ 1)) %>% 
+  mutate(density_sims = exp(Intercept + altitude_beta*(altitude/1000) +
+                              altitude_beta*date_factor + altitude_beta*date_alt_factor))
+
+
+library(scales)
 
 ggplot() +
-  geom_line(data=prior_sims, aes(x = weight_s, y = count_sims, group = iter))+
-  geom_point(data=d,aes(x=weight_s, y=log(combined_egg_total),color="red"))
+  geom_point(data=prior_sims, aes(x = altitude, y = density_sims, group = iter),
+             alpha = 0.25) +
+  scale_y_log10(label = comma) +
+  facet_grid(~date)
 
-get_prior(gsi ~ length_s*lab_sex + I(length_s^2),
-          data = d,
-          family = gaussian())
+geom_point(data=all_timed,aes(x=altitude, y=log(altitude_beta),color="species"))
 
 
+# change altitude_km to site
 # making my model
-altitude <- brm(specimens_m_2 ~ species + altitude + species*altitude, 
-                           data = all_timed,
-                           family = gaussian(),
-                           cores = 1, chains = 1, iter = 1000,
-                           sample_prior = "yes",
-                           file="models/altitude.rds",
-                           file_refit = "on_change")
+altitude <- brm(specimens_m_2_01 ~ 1 + date + (1 + date|species) + (1 + date|site), 
+                           data = CaveCreek,
+                           family = Gamma(link="log"),
+                prior = c(prior(normal(0,1), class = "b"),
+                          prior(normal(-7,3), class="Intercept")),
+                           cores = 4, chains = 4, iter = 1000,
+                           sample_prior = "no")
+
+# altitude_update <- update(altitude, sample_prior="no", iter=2000, chains=4, cores=4)
+
+summary(altitude)
+
+hist(all_timed$specimens_m_2)
 
 # conditional effects, taking all individuals into account
-plot(conditional_effects(altitude, re_formula = NULL), points = T)
+plot(conditional_effects(altitude, re_formula = NA), points = T)
 
 # conditional effects, showing the mean difference
 plot(conditional_effects(altitude), points = T)
@@ -203,13 +223,109 @@ pp_check(altitude, type = "hist")
 
 saveRDS(altitude, "models/altitude.rds")
 
-# # conditional effects, manual plotting
-# as_draws_df(length_bsr_negbinom)
-# 
-# cond_effect_length <- conditional_effects(length_bsr_negbinom)
-# cond_effect_length$length_s
-# 
-# cond_effect_length$lenth_s %>% 
+# conditional effects, manual plotting
+
+posts <- altitude$data %>% 
+  select(date, species) %>% 
+  expand_grid(site = unique(altitude$data$site)) %>% 
+  add_epred_draws(altitude, re_formula = NULL)
+
+
+Predictions <- posts %>% 
+  ggplot(aes(x = site, y = .epred)) + 
+  geom_violin(aes(group = site), fill="honeydew3") +
+  facet_grid(species~date) +
+  geom_point(data=altitude$data, aes(y = specimens_m_2_01), color="darkolivegreen", fill="darkolivegreen2",shape=21, size=2) + 
+  scale_y_log10(label=comma)+
+  # scale_y_discrete(0,10)+
+  # theme_linedraw()+
+  labs(title = "Predicted density across sites in Cave Creek",
+       subtitle = "Stream Predators",
+       x="",
+       y="Density of Specimens per Square Meter (note: log scale)")+
+  theme(axis.text.x = element_text(size=10, angle=45, vjust= 1, hjust = 1),
+        axis.text.y = element_text(size=10),
+        legend.position = "none")
+
+ggsave(Predictions, file= "plots/Predictions.png", dpi = 350, width = 8.5, height = 7, units = "in")
+
+# generalized linear mixed model, structure of model can be run with any statistical framework
+# same as logistic regression model (likelihood is not Gaussian)
+
+### running with altitude instead of site ###
+
+# getting priors
+get_prior(specimens_m_2 ~ 1 + date + (1 + date|species) + (1 + date|altitude), 
+          data = all_timed,
+          family = Gamma(link="log"))
+
+# simulating priors
+priors2 = tibble(altitude_beta = rnorm(100, 0, 1),
+                Intercept = rnorm(100, -7, 3),
+                iter = 1:100)
+
+prior_sims2 = priors2 %>%
+  expand_grid(all_timed %>% distinct(altitude, date,species)) %>%
+  mutate(date_alt = paste0(date, "_", altitude),
+         date_no = date - 2013,
+         date_factor = case_when(date_no == 0 ~ 0, TRUE ~ 1),
+         date_alt_factor = case_when(date_alt == "2013_1615" ~ 0,
+                                     TRUE ~ 1)) %>% 
+  mutate(density_sims = exp(Intercept +
+                              altitude_beta*date_factor + 
+                              altitude_beta*date_alt_factor))
+
+ggplot() +
+  geom_point(data=prior_sims, aes(x = altitude, y = density_sims, group = iter),
+             alpha = 0.25) +
+  scale_y_log10(label = comma) +
+  facet_grid(~date)
+
+
+altitude2 <- brm(specimens_m_2_01 ~ 1 + date + (1 + date|species) + (1 + date|altitude), 
+                data = CaveCreek,
+                family = Gamma(link="log"),
+                prior = c(prior(normal(0,1), class = "b"),
+                          prior(normal(-6,3), class="Intercept")),
+                cores = 1, chains = 1, iter = 1000,
+                sample_prior = "no",
+                file="models/altitude2.rds",
+                file_refit = "on_change")
+
+# altitude_update <- update(altitude, sample_prior="no", iter=2000, chains=4, cores=4)
+
+summary(altitude2)
+
+posts2 <- altitude2$data %>% 
+  select(date, species,altitude) %>% 
+  expand_grid(altitudes = unique(altitude2$data$altitude)) %>% 
+  add_epred_draws(altitude2, re_formula = NULL)
+
+
+posts2 %>% 
+  group_by(altitudes,species) %>% 
+  median_qi(.epred) %>% 
+  arrange(species)
+
+Predictions2 <- posts2 %>% 
+  ggplot(aes(x = altitude, y = .epred)) + 
+  geom_boxplot(aes(group = altitude), alpha=0.01) +
+  facet_grid(species~date) +
+  geom_point(data=altitude2$data, aes(y = specimens_m_2_01), color="darkolivegreen", fill="darkolivegreen4",shape=21, size=2) + 
+  scale_y_log10(label=comma)+
+  # scale_y_discrete(0,1.25)+
+  # theme_linedraw()+
+  labs(title = "Predicted density across sites in Cave Creek",
+       subtitle = "Stream Predators",
+       x="Altitude (km)",
+       y="Density of Specimens per Square Meter (note: log scale)")+
+  theme(axis.text.x = element_text(size=10, angle=45, vjust= 1, hjust = 1),
+        axis.text.y = element_text(size=10),
+        legend.position = "none")
+
+ggsave(Predictions2, file= "plots/Predictions2.png", dpi = 350, width = 8.5, height = 7, units = "in")
+
+# cond_effect_length$lenth_s %>%
 #   ggplot(aes(x=length_s)) +
 #   geom_pointrange(aes(y=estimate__, ymin=lower__, ymax=upper__))+
 #   geom_point(data = length_bsr_negbinom$data, aes(x=length_s, y=combined_egg_total))+
@@ -218,25 +334,25 @@ saveRDS(altitude, "models/altitude.rds")
 # 
 # cond_data_length <- length_bsr_negbinom$data %>% distinct(length_s, combined_egg_total)
 # 
-# posts_length <- add_epred_draws(length_bsr_negbinom, newdata= length_bsr_negbinom$data %>% 
+# posts_length <- add_epred_draws(length_bsr_negbinom, newdata= length_bsr_negbinom$data %>%
 #                                   distinct(length_s) , re_formula = NA)
 # 
 # 
-# posts_length_all <- add_predicted_draws(length_bsr_negbinom, newdata= length_bsr_negbinom$data %>% 
+# posts_length_all <- add_predicted_draws(length_bsr_negbinom, newdata= length_bsr_negbinom$data %>%
 #                                           distinct(length_s) , re_formula = NA)
 # 
 # d_length <- d %>% distinct(length_mm, length_s)
 # 
 # PosteriorLength <- posts_length_all %>%
-#   group_by(length_s) %>% 
-#   left_join(d_length) %>% 
-#   median_qi(.prediction) %>% 
-#   mutate(length_mm = (length_s*sd(d$length_mm)) + mean(d$length_mm)) %>% 
+#   group_by(length_s) %>%
+#   left_join(d_length) %>%
+#   median_qi(.prediction) %>%
+#   mutate(length_mm = (length_s*sd(d$length_mm)) + mean(d$length_mm)) %>%
 #   ggplot(aes(x = length_mm, y = .prediction)) +
 #   geom_line() +
 #   geom_ribbon(aes(ymin = .lower, ymax = .upper),
 #               alpha = 0.2) +
-#   geom_point(data = d, 
+#   geom_point(data = d,
 #              aes(y = combined_egg_total)) +
 #   labs(title= "Blue Sucker Fecundity Prediction",
 #        subtitle="Large grey bar incorporates the variation in individuals",
@@ -248,15 +364,15 @@ saveRDS(altitude, "models/altitude.rds")
 # # This model incorporates all individuals, and not JUST the mean.
 # 
 # PosteriorLengthMean <- posts_length %>%
-#   group_by(length_s) %>% 
-#   left_join(d_length) %>% 
-#   median_qi(.epred) %>% 
-#   mutate(length_mm = (length_s*sd(d$length_mm)) + mean(d$length_mm)) %>% 
+#   group_by(length_s) %>%
+#   left_join(d_length) %>%
+#   median_qi(.epred) %>%
+#   mutate(length_mm = (length_s*sd(d$length_mm)) + mean(d$length_mm)) %>%
 #   ggplot(aes(x = length_mm, y = .epred)) +
 #   geom_line() +
 #   geom_ribbon(aes(ymin = .lower, ymax = .upper),
 #               alpha = 0.2) +
-#   geom_point(data = d, 
+#   geom_point(data = d,
 #              aes(y = combined_egg_total)) +
 #   labs(title= "Blue Sucker Mean Fecundity Prediction",
 #        subtitle="Grey bar incorporates only the variation in the mean egg count",
