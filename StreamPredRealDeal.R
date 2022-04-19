@@ -1,11 +1,13 @@
-library(readr)
+# load libraries
+library(Matrix)
+library(dbplyr)
 library(tidyverse)
-library(tidybayes)
-library(dplyr)
-library(ggplot2)
-library(janitor)
-library(ggpubr)
 library(brms)
+library(dplyr)
+library(janitor)
+library(readr)
+library(tidybayes)
+library(ggplot2)
 
 # Loading the data
 # looking ONLY at hellgrammites, rrs (red rock skimmer), and oplonaeschna (riffle darner)
@@ -156,23 +158,30 @@ ggsave(main_preds, file= "plots/main_preds.png", dpi = 350, width = 6.25, height
 
 #### some sort of analysis , start from "getting priors" section####
 
-# density over altitude changes
-
-altitude <- specimens_m_2 ~ altitude
-class(altitude)
-
-boxplot(specimens_m_2 ~ altitude*species, 
-        data = CC2022,
-        color = "species",
-        varwidth = TRUE)
-
-summary(aov(specimens_m_2 ~ altitude),
-        data = CC2022)
-
 # getting priors
-get_prior(specimens_m_2 ~ species + altitude + species*altitude, 
+get_prior(specimens_m_2 ~ species + altitude + date + species*altitude + species*date, 
           data = all_timed,
           family = gaussian())
+
+# simulating priors
+priors = tibble(density_beta = rnorm(100, 0.25, 0.5),
+                altitude_beta = rnorm(),
+                # Iweight_beta2 = rnorm(100,-0.15 ,0.05),
+                Intercept = rnorm(100, 1, 1),
+                iter = 1:100)
+
+prior_sims = priors %>%
+  expand_grid(d %>% distinct(species)) %>%
+  mutate(count_sims = Intercept + weight_beta*weight_s)
+
+ggplot() +
+  geom_line(data=prior_sims, aes(x = weight_s, y = count_sims, group = iter))+
+  geom_point(data=d,aes(x=weight_s, y=log(combined_egg_total),color="red"))
+
+get_prior(gsi ~ length_s*lab_sex + I(length_s^2),
+          data = d,
+          family = gaussian())
+
 
 # making my model
 altitude <- brm(specimens_m_2 ~ species + altitude + species*altitude, 
@@ -185,6 +194,7 @@ altitude <- brm(specimens_m_2 ~ species + altitude + species*altitude,
 
 # conditional effects, taking all individuals into account
 plot(conditional_effects(altitude, re_formula = NULL), points = T)
+
 # conditional effects, showing the mean difference
 plot(conditional_effects(altitude), points = T)
 
