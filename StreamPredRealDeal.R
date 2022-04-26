@@ -86,7 +86,14 @@ CC2016 <- CaveCreek %>% filter(date=="2016")
 # Seeing if there's a difference between Timed 1, Timed 2, and the combined timed samples.
 CC2022 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
   geom_col(aes(fill=species), position = position_dodge(width=1))+
-  facet_grid(cols=vars(timed_sample))
+  facet_grid(cols=vars(timed_sample)) +
+  labs(title= "2022 Timed Sample Densities",
+       color = "Species")+
+  geom_text(aes(label=specimens_m_2), position = position_nudge(x=0.01,y=0.01),size=5, color="black")+
+  theme(text=element_text(size=20),
+        axis.text.x = element_text(size=14, angle=45, vjust= 1, hjust = 1),
+        axis.text.y = element_text(size=14),
+        )
 # kind of looks like there is a difference between timed one and two,
 # but would need to make a model to see if that is true.
 # Will most likely want to use timed 3 because it is an average of both timed 1 and 2.
@@ -118,7 +125,7 @@ CC2016 %>% ggplot(aes(x=site, y=specimens_m_2,color=species))+
 
 density_compared_by_year <- CaveCreek %>% ggplot(aes(x=site,y=specimens_m_2))+ 
   facet_grid(rows = vars(species), cols=vars(date))+
-  geom_point(aes(fill=species))+
+  geom_col(aes(fill=species))+
   geom_text(aes(label=specimens_m_2), position = position_nudge(y=0.05),size=5)+
   # theme_linedraw()+
   labs(title = "Raw data comparison of density across sites in Cave Creek over 9 years",
